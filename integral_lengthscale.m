@@ -96,7 +96,7 @@ elseif strcmp(options.Method,'integration')
     end
     
 else
-    error('Invalid method selected.)
+    error('Invalid method selected.')
     
 end
 

@@ -42,7 +42,7 @@ function [updateStruct, dispString] = etd(updateStruct, thisNum, ofNum, everySec
     end
     thisNum = double(thisNum);
     if thisNum <= updateStruct.lastNum
-        warning('etd called with an iteration the same or earlier than the last call.');
+%         warning('etd called with an iteration the same or earlier than the last call.');
        return;
     end
     
