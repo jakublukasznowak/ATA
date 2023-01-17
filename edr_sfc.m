@@ -91,7 +91,9 @@ end
 Li_fit = length(rv_fit);
 
 if Li_fit<Np
-    fprintf('Warning in EDR_SFC: Number of fitting points was reduced to %d.\n',Li_fit)
+    if ~strcmp(options.Method,'direct')
+        fprintf('Warning in EDR_SFC: Number of fitting points was reduced to %d.\n',Li_fit)
+    end
 end
 
 if ~options.Plot
