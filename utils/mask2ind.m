@@ -20,15 +20,15 @@ if max(logvec)>0
     im = find(diff(logvec)==-1); Lm=length(im);
     if ip(1)<im(1)
         if Lp==Lm
-            indlist = [ip im];
+            indlist = [ip+1 im];
         elseif Lp>Lm
-            indlist = [ip [im;Lc]];
+            indlist = [ip+1 [im;Lc]];
         end
     else
         if Lp==Lm
-            indlist = [[1;ip] [im;Lc]];
+            indlist = [[1;ip+1] [im;Lc]];
         elseif Lp<Lm
-            indlist = [[1;ip] im];
+            indlist = [[1;ip+1] im];
         end
     end
 else

@@ -34,7 +34,7 @@ function varargout = process_timeseries(x,ind,fun,varargin)
 
 
 arguments
-    x (:,1) {mustBeReal, mustBeFinite, mustBeNonempty}
+    x (:,1) {mustBeReal, mustBeNonempty}
     ind (:,2) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty}
     fun
 end
@@ -75,7 +75,8 @@ end
 % Arrange output
 varargout = cell(1,nargout);
 for j=1:nargout
-    varargout{j} = cell2mat(out(:,j));
+%     varargout{j} = cell2mat(out(:,j));
+    varargout{j} = [out{:,j}]';
 end
 
 

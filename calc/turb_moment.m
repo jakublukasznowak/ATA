@@ -23,8 +23,7 @@ function [F,e_s,e_r,Lx,Ly,Lxy,Lff] = turb_moment (x,y,dr,options)
 %
 % [...,ES,ER] = turb_moment(...,'IntegralLengthScaleMethod',METHOD) selects
 % the method for the estimation of integral lengthscales used in the error
-% estimation which is achieved by calling the function INTEGRAL_LENGTHSCALE. 
-% METHOD can be 'e-decay' or 'integration'.
+% estimation which is achieved by calling the function INT_LS_SHORT. 
 %
 % [...,ES,ER] = turb_moment(...,'IntegralLengthSampling',SMPL) controls
 % the sampling interval [in meters] for calculating the correlation function
@@ -33,7 +32,7 @@ function [F,e_s,e_r,Lx,Ly,Lxy,Lff] = turb_moment (x,y,dr,options)
 % [...,LX] = turb_moment(X,N,DR) reports the integral lengthscale of X 
 % used in error calculation.
 %
-% [...,LX,LY,LXY,LFF] = turb_moment(X,N,DR) reports the integral lengthscales
+% [...,LX,LY,LXY,LFF] = turb_moment(X,Y,DR) reports the integral lengthscales
 % of X, Y, the integral lengthscale obtained based on crosscorrelation, the
 % integral lengthscale of the product timeseries X*Y, respectively, which
 % are used in error calculation.
@@ -44,14 +43,15 @@ function [F,e_s,e_r,Lx,Ly,Lxy,Lff] = turb_moment (x,y,dr,options)
 % X'Y', the correlation coefficient RXY betwenn X and Y, respectively,
 % intead of calculating those inside this function.
 %
-% See also INTEGRAL_LENGTHSCALE, REYNOLDS_DECOMPOSITION
+% See also INT_LS_SHORT, REYNOLDS_DECOMPOSITION
 
 
 arguments
     x (:,1) {mustBeReal, mustBeFinite, mustBeNonempty}
     y (:,1) {mustBeReal, mustBeFinite, mustBeNonempty, mustBeVectorOrInteger(y,x)}
     dr (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} = 1
-    options.IntegralLengthscaleMethod (1,1) string {mustBeMember(options.IntegralLengthscaleMethod,{'e-decay','integration'})} = 'integration'
+    options.IntegralLengthscaleMethod (1,1) string {mustBeMember(options.IntegralLengthscaleMethod,...
+        {'e-decay','zero','integrate','cum-integrate'})} = 'e-decay'
     options.IntegralLengthscaleSampling (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} = dr
     options.Lx (1,1) {mustBeNonnegative, mustBeFinite, mustBeNonempty} = 0
     options.Ly (1,1) {mustBeNonnegative, mustBeFinite, mustBeNonempty} = 0
@@ -74,7 +74,7 @@ if isscalar(y)
         if options.Lx>0
             Lx = options.Lx;
         else
-            Lx = integral_lengthscale(x,dr,'Method',options.IntegralLengthscaleMethod);
+            Lx = int_ls_short(x,'Method',options.IntegralLengthscaleMethod);
         end
         Ly = [];
         Lxy= [];
@@ -101,7 +101,7 @@ if isscalar(y)
             e_r = sqrt( Lx/L*84/9 );   % L94 (38)
             
         else
-            fprintf('Error equations for order %d not implemented :(.\n',order)
+            warning('TURB_MOMENT:NoOrder','Error equations for order %d not implemented.',order)
         end
         
     end
@@ -121,13 +121,12 @@ else
         if options.Lxy>0
             Lxy = options.Lxy;
         else
-            Lxy = integral_lengthscale(x,dr,'Method',options.IntegralLengthscaleMethod,...
-                'CrossCorrelatedSignal',y);
+            Lxy = int_ls_short(x,y,'Method',options.IntegralLengthscaleMethod);
         end
         if options.Lff>0
             Lff = options.Lff;
         else
-            Lff = integral_lengthscale(x.*y-F,dr,'Method',options.IntegralLengthscaleMethod);
+            Lff = integral_lengthscale(x.*y-F,'Method',options.IntegralLengthscaleMethod);
         end
         if abs(options.Rxy)>0
             Rxy = options.Rxy;

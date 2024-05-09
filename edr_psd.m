@@ -1,5 +1,5 @@
 
-function [edrFixed,slopeFree,R2,e_edrFixed,e_slopeFree,fig] = edr_psd (x,dr,fitting_range,component,options)
+function [edrFixed,slopeFree,e,fig] = edr_psd (x,dr,fitting_range,C,options)
 
 % EDR_PSD estimates turbulent kinetic dissipation rate with a standard
 % method assuming Kolmogorov scaling of the velocity spectrum in
@@ -64,19 +64,21 @@ arguments
     x (:,1) {mustBeReal, mustBeFinite, mustBeNonempty}
     dr (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} % = TAS/samp
     fitting_range (1,2) {mustBePositive, mustBeFinite, mustBeNonempty, mustBeValidRange(fitting_range,x,dr)}
-    component (1,1) string {mustBeMember(component,{'lon','lat'})}
-    options.Method (1,1) string {mustBeMember(options.Method,{'direct','logmean','sparse'})} = 'logmean'
+    C (1,1) {mustBeReal, mustBeFinite, mustBeNonempty} = 0.5
+    options.Slope (1,1) {mustBeReal, mustBeFinite, mustBeNonempty} = 5/3
+    options.Method (1,1) string {mustBeMember(options.Method,{'direct','logmean'})} = 'logmean'
     options.FittingPoints (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = 20
     options.Plot (1,1) logical = false
+    options.PlotRange (1,2) {mustBePositive, mustBeFinite, mustBeNonempty, mustBeValidRange(options.PlotRange,x,dr)} = []
     options.WindowLength (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = floor(length(x)/2)
-    options.WindowOverlap (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = ceil(length(x)/4)
+    options.WindowOverlap (1,1) {mustBeInteger, mustBeNonnegative, mustBeFinite, mustBeNonempty} = ceil(length(x)/4)
 end
 
 
 r1 = fitting_range(1); 
 r2 = fitting_range(2);
-if r2>dr*options.WindowLength/2
-    r2 = dr*options.WindowLength/2;
+if r2>dr*options.WindowLength
+    r2 = dr*options.WindowLength;
     fprintf('Warning in EDR_PSD: Fitting range modified to [%.2f %.2f] to comply with the pwelch window length.\n',r1,r2)
 end
 w1 = 2*pi*dr/r2;
@@ -192,12 +194,12 @@ end
 function mustBeValidRange(a,x,dr)
     if ~ge(a(1),dr*2)
         eid = 'Range:firstTooLow';
-        msg = sprintf('Fitting range must be within [dr*2 dr*length(x)/2] = [%.2f %.2f].',dr*2,dr*length(x)/2);
+        msg = sprintf('Fitting range must be within [dr*2 dr*length(x)] = [%.2f %.2f].',dr*2,dr*length(x));
         throwAsCaller(MException(eid,msg))
     end
-    if ~le(a(2),length(x)*dr/2)
+    if ~le(a(2),length(x)*dr)
         eid = 'Range:lastTooHigh';
-        msg = sprintf('Fitting range must be within [dr*2 dr*length(x)/2] = [%.2f %.2f].',dr*2,dr*length(x)/2);
+        msg = sprintf('Fitting range must be within [dr*2 dr*length(x)] = [%.2f %.2f].',dr*2,dr*length(x));
         throwAsCaller(MException(eid,msg))
     end
     if ge(a(1),a(2))
