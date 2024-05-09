@@ -1,8 +1,5 @@
 %% Turbulence in trade wind cumulus clouds
-
-
-
-%% INTRODUCTION
+%% Introduction
 % Shallow cumulus clouds in the trade-wind regions cool the planet by reflecting 
 % solar radiation. The response of trade cumulus clouds to climate change is a 
 % key uncertainty in climate projections. The properties of those clouds and their 
@@ -19,18 +16,13 @@
 % Analysis toolbox in a consistent workflow to analyse measurements performed 
 % in the atmosphere with a research aircraft. It is achieved using the data collected 
 % in the segment R2B of ATR flight RF12 during EUREC4A.
-
-
-
-%% IMPORT DATA
+%% Import data
 % Add the toolbox functions to MATLAB path.
 
-addpath(['..',filesep])
-addpath(['..',filesep,'utils'])
-
-%% Download data files
+addpath(genpath(['..',filesep]))
+% Download data files
 % Two Net-CDF data files serve as the input:
-% 
+%% 
 % * |EUREC4A_ATR_turbulent_fluctuations_20200205_RF12_R2B_L3_v1.9.nc| containing 
 % the timeseries of turbulent wind velocity, temperature and humidity measured 
 % in the selected segment from the dataset <https://doi.org/10.25326/128 Brilouet, 
@@ -47,8 +39,7 @@ http_mcph = 'https://observations.ipsl.fr/aeris/eurec4a-data/AIRCRAFT/ATR/PMA/PR
 
 path_turb = websave(file_turb,[http_turb,file_turb]);
 path_mcph = websave(file_mcph,[http_mcph,file_mcph]);
-
-%% Load data from files
+% Load data from files
 % Read start and end time of the segment. Load detrended 25 Hz timeseries of 
 % turbulent temperature, humidity and wind velocity components: longitudinal, 
 % transversal, vertical. For details about the data, see <https://essd.copernicus.org/articles/13/3379/2021/ 
@@ -65,8 +56,7 @@ R = ncread(path_turb,'MR_DET'); % water vapor mixing ratio
 U = ncread(path_turb,'UL_DET'); % longitudinal wind velocity
 V = ncread(path_turb,'VT_DET'); % transverse   wind velocity
 W = ncread(path_turb,'W_DET');  % vertical     wind velocity
-
-%%
+%% 
 % Load 1 Hz timeseries of liquid water content and cloud mask for the whole 
 % flight.
 
@@ -75,16 +65,14 @@ fsamp_mcph = 1; % [Hz]
 time_mcph = ncread(path_mcph,'time'); % time [seconds from 2020-01-01]
 LWC = ncread(path_mcph,'LWC');  % liquid water content
 CLD = ncread(path_mcph,'CLOUD_mask'); % cloud mask
-
-%%
+%% 
 % Specify fixed true air speed of the aircraft. The true measured TAS is indeed 
 % nearly constant in horizontal segments. The respective data on exact TAS can 
 % be found in the dataset <https://doi.org/10.25326/298 CNRM/TRAMM, SAFIRE, Laboratoire 
 % d'Aérologie (2021)>.
 
 TAS = 100; % [m/s]
-
-%% Arrange the imported data
+% Arrange the imported data
 % Convert time stamps and time vectors into native Matlab |datetime|.
 
 epoch = datetime('2020-01-01 00:00:00.000');
@@ -98,8 +86,7 @@ time_turb_start = datetime(dateshift(time_turb(1),'start','day')+duration(time_t
     'Format','yyyy-MM-dd HH:mm:ss.SS','TimeZone','UTC');
 time_turb_end  = datetime(dateshift(time_turb(1),'start','day')+duration(time_turb_end),...
     'Format','yyyy-MM-dd HH:mm:ss.SS','TimeZone','UTC');
-
-%%
+%% 
 % Cut out only the selected segment from the whole-flight microphysics data.
 
 ind1 = find(time_mcph >= time_turb_start,1,'first');
@@ -108,14 +95,12 @@ ind2 = find(time_mcph <= time_turb_end,  1,'last');
 time_mcph = time_mcph(ind1:ind2);
 LWC = LWC(ind1:ind2);
 CLD = CLD(ind1:ind2);
-
-%%
+%% 
 % Convert cloud mask from logical vector into a list of time stamps denoting 
 % the start and end of cloud penetrations.
 
 CLDind = time_mcph(mask2ind(CLD))+duration(0,0,0.5/fsamp_mcph);
-
-%% Plot the imported data
+% Plot the imported data
 
 figure('Units','normalized','Position',[0 0 0.6 0.3])
 hold on, grid on
@@ -134,7 +119,6 @@ axis tight
 legend({'r/4+2','T+1','LWC*4','clouds'})
 xlabel('Time')
 title('ATR RF12 R2B thermodynamics')
-
 figure('Units','normalized','Position',[0 0 0.6 0.3])
 hold on, grid on
 plot(datenum(time_turb),[U V W])
@@ -149,10 +133,7 @@ axis tight
 legend({'u','v','w','clouds'})
 xlabel('Time')
 title('ATR RF12 R2B wind velocity')
-
-
-
-%% REYNOLDS DECOMPOSITION
+%% Reynolds decomposition
 % Reynolds averaing/decomposition is the partition of any signal $x\left(t\right)$into 
 % slowly varying mean component $\left\langle x\left(t\right)\right\rangle$ and 
 % rapidly fluctuating component $x^{\prime } \left(t\right)\ldotp$
@@ -168,8 +149,7 @@ window_Re = cutoff_scale/TAS*fsamp_turb; % # points
 
 [Wp_movmean,Wm_movmean] = reynolds_decomposition(W,window_Re,'Method','movmean');
 [Wp_butter, Wm_butter ] = reynolds_decomposition(W,window_Re,'Method','butter','FilterOrder',6);
-
-%%
+%% 
 % Compare the mean components for the two methods with the original signal.
 
 figure('Units','normalized','Position',[0 0 0.6 0.3])
@@ -180,8 +160,7 @@ axis tight
 xlabel('Time [s]'), ylabel('w [m/s]')
 title('Reynolds decomposition of vertical wind velocity')
 legend({'orginal','movmean','butter'})
-
-%%
+%% 
 % Compare the spectra of the signal components obtained with the two methods.
 
 [psd_W,fv] = pwelch(W,[],[],[],fsamp_turb);
@@ -197,8 +176,7 @@ axis tight
 xlabel('Frequency [Hz]'), ylabel('PSD')
 legend({'orginal','movmean','butter','cutoff'},'Location','southwest')
 title('Spectral properties of decomposed signals')
-
-%%
+%% 
 % Decompose all turbulent signals using the |butter| method.
 
 [Tp,Tm] = reynolds_decomposition(T,window_Re,'Method','butter','FilterOrder',6);
@@ -206,10 +184,7 @@ title('Spectral properties of decomposed signals')
 [Up,Um] = reynolds_decomposition(U,window_Re,'Method','butter','FilterOrder',6);
 [Vp,Vm] = reynolds_decomposition(V,window_Re,'Method','butter','FilterOrder',6);
 [Wp,Wm] = reynolds_decomposition(W,window_Re,'Method','butter','FilterOrder',6);
-
-
-
-%% INTEGRAL LENGTH SCALES
+%% Integral length scales
 % Integral length scale of a turbulent signal$x\left(r\right)$is defined as 
 % the integral of the autocorrelation function.
 % 
@@ -222,23 +197,21 @@ title('Spectral properties of decomposed signals')
 % In practice, indefinite integration cannot be achieved in the case of measurement 
 % data. Therefore, the |integral_lengthscale| function implements two standard 
 % practical methods used in such a situation:
-% 
+%% 
 % * |e-decay:| evaluates a distance at which autocorrelation function $\rho 
 % \left(r\right)$decays e-times,
 % * |integration:| numerically integrate the autocorrelation function up to 
 % its first zero.
-% 
+%% 
 % Compute spatial distance between sample points.
 
 dr = TAS/fsamp_turb;
-
-%%
+%% 
 % Compute the integral length scale for vertical wind velocity obtained with 
 % two available methods. Show the autocorrelation function in diagnostics plots.
 
-L_W_edecay = integral_lengthscale(W,dr,'Method','e-decay','Plot',true);
-L_W_integration = integral_lengthscale(W,dr,'Method','integration','Plot',true);
-
+[L_W_edecay,~] = int_ls_short(W,'Method','e-decay','dr',dr,'Plot',true);
+L_W_integration = int_ls_short(W,'Method','integrate','dr',dr,'Plot',true);
 %% 
 % Compute integral lengthscales for other variables and compare the results 
 % of the two methods. Note that the choice of cutoff scale in Reynolds decomposition 
@@ -250,31 +223,26 @@ L_W_integration = integral_lengthscale(W,dr,'Method','integration','Plot',true);
 % expected large-scale effects).
 
 ILS = table('Size',[5 2],'VariableTypes',{'double','double'},...
-    'VariableNames',{'e-decay','integration'},'RowNames',{'T','R','U','V','W'});
+    'VariableNames',{'e-decay','integrate'},'RowNames',{'T','R','U','V','W'});
 
 for i=1:size(ILS,1)                     % iterate over turbulent variables (=rows of the table)
     var = ILS.Properties.RowNames{i};   % current variable name
-    ILS{var,'e-decay'}     = integral_lengthscale(eval(var),dr,'Method','e-decay');
-    ILS{var,'integration'} = integral_lengthscale(eval(var),dr,'Method','integration');
+    ILS{var,'e-decay'}     = int_ls_short(eval(var),'Method','e-decay','dr',dr);
+    ILS{var,'integrate'} = int_ls_short(eval(var),'Method','integrate','dr',dr);
 end
 
 ILS
-
-
-
-%% TURBULENT MOMENTS
+%% Turbulent moments
 % Compute the variance (2nd moment) of turbulent wind velocity using |turb_moment| 
 % function.
 
 u2 = turb_moment(Up,2);
 v2 = turb_moment(Vp,2);
 w2 = turb_moment(Wp,2);
-
-%%
+%% 
 % Calculate turbulence kinetic energy (TKE).
 
 TKE = 0.5*(u2+v2+w2)
-
 %% 
 % Compute the 2nd, 3rd and 4th moment of turbulent signals with |turb_moment| 
 % function. Estimate systematic and random sampling errors of the outcome according 
@@ -292,13 +260,12 @@ for i=1:size(MOM,1)                     % iterate over turbulent variables (=row
     var = MOM.Properties.RowNames{i};   % current variable name
     for k=2:4                           % iterate over moments 2nd to 4th
         c = 3*(k-2)+1;                  % column index of the kth moment value
-        [MOM{var,c},MOM{var,c+1},MOM{var,c+2}] = turb_moment(eval([var,'p']),k,'Lx',ILS{var,'integration'});
+        [MOM{var,c},MOM{var,c+1},MOM{var,c+2}] = turb_moment(eval([var,'p']),k,'Lx',ILS{var,'integrate'});
     end
 end
 
 MOM
-
-%%
+%% 
 % The error estimations are fractions relative to the flux value.
 % 
 % Compute standard deviation, skewness and kurtosis.
@@ -308,10 +275,7 @@ MOM.skewness = MOM.third ./ MOM.second.^1.5;
 MOM.kurtosis = MOM.fourth ./ MOM.second.^2;
 
 MOM(:,{'std','skewness','kurtosis'})
-
-
-
-%% TURBULENT FLUXES
+%% Turbulent fluxes with errors
 % Calculate turbulent fluxes of heat $\left\langle w^{\prime } \;T^{\prime } 
 % \right\rangle \;$and moisture $\left\langle w^{\prime } r^{\prime } \right\rangle$ 
 % with |turb_moment| function. Estimate systematic and random sampling errors 
@@ -319,7 +283,7 @@ MOM(:,{'std','skewness','kurtosis'})
 % Lenschow et al. (1994)>.
 % 
 % First, estimate the parameters which are needed in flux error computation:
-% 
+%% 
 % * integral length scale of the product of the two signals,
 % * integral length scale for the cross-correlatation between the two signals,
 % * correlation coefficient of the two signals.
@@ -327,17 +291,16 @@ MOM(:,{'std','skewness','kurtosis'})
 ILS2 = table('Size',[2 3],'VariableTypes',{'double','double','double'},...
     'VariableNames',{'product','cross','corrcoef'},'RowNames',{'WT','WR'});
 
-ILS2{'WT','product'} = integral_lengthscale(W.*T-mean(W.*T),dr,'Method','integration');
-ILS2{'WR','product'} = integral_lengthscale(W.*R-mean(W.*R),dr,'Method','integration');
+ILS2{'WT','product'} = int_ls_short(W.*T-mean(W.*T),'dr',dr);
+ILS2{'WR','product'} = int_ls_short(W.*R-mean(W.*R),'dr',dr);
 
-ILS2{'WT','cross'} = integral_lengthscale(W,dr,'CrossCorrelatedSignal',T,'Method','integration');
-ILS2{'WR','cross'} = integral_lengthscale(W,dr,'CrossCorrelatedSignal',R,'Method','integration');
+ILS2{'WT','cross'} = int_ls_short(W,T,'dr',dr);
+ILS2{'WR','cross'} = int_ls_short(W,R,'dr',dr);
 
 r1 = corrcoef(W,T); ILS2{'WT','corrcoef'} = r1(1,2);
 r2 = corrcoef(W,R); ILS2{'WR','corrcoef'} = r2(1,2);
 
 ILS2
-
 %% 
 % Compute vertical fluxes of heat and moisture together with their systematic 
 % and random sampling errors.
@@ -351,15 +314,12 @@ FLX = table('Size',[2 3],'VariableTypes',{'double','double','double'},...
     turb_moment(Wp,Rp,'Lff',ILS2{'WR','product'},'Lxy',ILS2{'WR','cross'},'Rxy',ILS2{'WR','corrcoef'});
 
 FLX
-%%
+%% 
 % The error estimations are fractions relative to the flux value.
-
-
-
-%% TKE DISSIPATION RATE
+%% TKE dissipation rate
 % Estimate turbulence kinetic energy dissipation rate with the 3 methods implemented 
 % in the toolbox:
-%
+%% 
 % * structure function method (|edr_sfc|) is based on the Kolmogorov scaling 
 % (2/3) of the 2nd order structure function in the inertial range of scales,
 % * power spectrum method (|edr_psd|) is based on the Kolmogorov scaling (-5/3) 
@@ -368,8 +328,7 @@ FLX
 % specific functional form of the spectrum in the dissipative range of scales 
 % and was outlined in sec. 2.c. of <https://journals.ametsoc.org/view/journals/atsc/76/5/jas-d-18-0146.1.xml 
 % Akinlabi et al. (2019)>.
-
-%% Find the inertial range
+% Find the inertial range
 % Prior to calculating the TKE dissipation rate, find out what is the range 
 % of scales where one can expect the Kolmogorov scaling characteristic for the 
 % inertial casacade. Evaluate the power spectrum with |pwelch| using its default 
@@ -386,16 +345,14 @@ axis tight
 xlabel('r [m]'), ylabel('PSD')
 legend({'u','v','w'},'Location','northwest')
 title('Spectrum of turbulent velocity fluctuations')
-
-%% Structure function method
+% Structure function method
 % Select the fitting range. In principle, the lower limit in the case of structure 
 % function method can be as small as the distance between sample points |dr|. 
 % For more information on the best choice of the fitting range, see <https://www.mdpi.com/2073-4433/11/2/199 
 % Waclawczyk et al. (2020)>.
 
 sfc_fit_range = [10 100]; % [m]
-
-%%
+%% 
 % Estimate TKE dissipation rate with |edr_sfc| function using its default method 
 % |logmean| with 12 fitting points. This method evaluates structure function at 
 % all possible displacements which belong to the fitting range but averages those 
@@ -418,11 +375,10 @@ EDR = table('Size',[3 3],'VariableTypes',{'double','double','double'},...
 SLP = table('Size',[3 2],'VariableTypes',{'double','double'},...
     'VariableNames',{'SFC','PSD'},'RowNames',{'U','V','W'});
 
-[EDR{'U','SFC'},SLP{'U','SFC'}] = edr_sfc(Up,dr,sfc_fit_range,'lon','FittingPoints',12,'Plot',true);
-[EDR{'V','SFC'},SLP{'V','SFC'}] = edr_sfc(Vp,dr,sfc_fit_range,'lat','FittingPoints',12,'Plot',true);
-[EDR{'W','SFC'},SLP{'W','SFC'}] = edr_sfc(Wp,dr,sfc_fit_range,'lat','FittingPoints',12,'Plot',true);
-
-%% Power spectrum method
+[EDR{'U','SFC'},SLP{'U','SFC'}] = edr_sfc(Up,dr,sfc_fit_range,2.0,'FitPoints',12,'Plot',true);
+[EDR{'V','SFC'},SLP{'V','SFC'}] = edr_sfc(Vp,dr,sfc_fit_range,2.6,'FitPoints',12,'Plot',true);
+[EDR{'W','SFC'},SLP{'W','SFC'}] = edr_sfc(Wp,dr,sfc_fit_range,2.6,'FitPoints',12,'Plot',true);
+% Power spectrum method
 % Select the fitting range. In principle, the lower limit in the case of power 
 % spectrum method can be as small as the Nyquist limit, i.e. the smallest resolvable 
 % wavelength which is typically |2*dr|. For more information on the best choice 
@@ -430,8 +386,7 @@ SLP = table('Size',[3 2],'VariableTypes',{'double','double'},...
 % et al. (2020)>.
 
 psd_fit_range = [10 100]; % [m]
-
-%%
+%% 
 % Estimate TKE dissipation rate with |edr_psd| function using its default method 
 % |logmean| with 16 fitting points. This method evaluates the power spectrum within 
 % the maximum available range of normalized frequencies, then averages the values 
@@ -447,11 +402,10 @@ psd_fit_range = [10 100]; % [m]
 % the input signal corresponds to longitudinal or lateral direction. Show the 
 % diagnostics plot. 
 
-[EDR{'U','PSD'},SLP{'U','PSD'}] = edr_psd(Up,dr,psd_fit_range,'lon','FittingPoints',16,'Plot',true);
-[EDR{'V','PSD'},SLP{'V','PSD'}] = edr_psd(Vp,dr,psd_fit_range,'lat','FittingPoints',16,'Plot',true);
-[EDR{'W','PSD'},SLP{'W','PSD'}] = edr_psd(Wp,dr,psd_fit_range,'lat','FittingPoints',16,'Plot',true);
-
-%% Corrected variance of derivatives method
+[EDR{'U','PSD'},SLP{'U','PSD'}] = edr_psd(Up,dr,psd_fit_range,0.5,'FitPoints',16,'Plot',true);
+[EDR{'V','PSD'},SLP{'V','PSD'}] = edr_psd(Vp,dr,psd_fit_range,0.65,'FitPoints',16,'Plot',true);
+[EDR{'W','PSD'},SLP{'W','PSD'}] = edr_psd(Wp,dr,psd_fit_range,0.65,'FitPoints',16,'Plot',true);
+% Corrected variance of derivatives method
 % Select the cutoff scale up to which the turbulent fluctuations are well resolved 
 % in the measured signal. In principle, the lower limit is the smallest resolvable 
 % wavelength |2*dr| but can be larger depending on the measurement and signal 
@@ -459,8 +413,7 @@ psd_fit_range = [10 100]; % [m]
 % al., 2020>).
 
 var_cutoff_scale = 2*dr; % [m]
-
-%%
+%% 
 % Estimate TKE dissipation rate with |edr_var| function using the default Pope 
 % dissipation spectrum. Declare whether the input signal corresponds to longitudinal 
 % or lateral direction. Show the diagnostics plots: normalized dissipation spectrum 
@@ -473,8 +426,7 @@ var_cutoff_scale = 2*dr; % [m]
 EDR{'U','VAR'} = edr_var(Up,dr,var_cutoff_scale,'lon','Plot',true);
 EDR{'V','VAR'} = edr_var(Vp,dr,var_cutoff_scale,'lat','Plot',true);
 EDR{'W','VAR'} = edr_var(Wp,dr,var_cutoff_scale,'lat','Plot',true);
-
-%% Compare the results
+% Compare the results
 % Compare the results of different methods applied to the three wind velocity 
 % components: dissipation rates obtained with the three methods and the fitted 
 % slopes for the structure function and power spectrum methods. Remember the expected 
@@ -485,10 +437,7 @@ EDR{'W','VAR'} = edr_var(Wp,dr,var_cutoff_scale,'lat','Plot',true);
 
 EDR
 SLP
-
-
-
-%% TKE DISSIPATION RATE VARIABILITY
+%% TKE dissipation rate variability
 % TKE dissipation rate is a microscopic parameter highly variable in space. 
 % With the help of Turbulence Toolbox, one can evaluate the variability of any 
 % parameter along the sampling track. The functions |define_av_windows| and |process_timeseries| 
@@ -508,31 +457,27 @@ L = length(time_turb);               % # points
 
 window_ind = define_av_windows(L,av_window,1,'Step',av_step,...
     'ReferencePosition','front','EndPoints','discard');
-
 %% 
 % Inspect the indices defining first four and last four of the averaging windows.
 
 window_ind([1:4,end-3:end],:)
-
-%%
+%% 
 % Compute the series of dissipation rates with structure function method for 
 % three velocity components.
 
 edr_sfc_U_ts = process_timeseries(Up,window_ind, @edr_sfc,...
-    dr,sfc_fit_range,'lon','Method','logmean','FittingPoints',12);
+    dr,sfc_fit_range,2.0,'Method','logmean','FitPoints',12);
 edr_sfc_V_ts = process_timeseries(Vp,window_ind, @edr_sfc,...
-    dr,sfc_fit_range,'lat','Method','logmean','FittingPoints',12);
+    dr,sfc_fit_range,2.6,'Method','logmean','FitPoints',12);
 edr_sfc_W_ts = process_timeseries(Wp,window_ind, @edr_sfc,...
-    dr,sfc_fit_range,'lat','Method','logmean','FittingPoints',12);
-
-%%
+    dr,sfc_fit_range,2.6,'Method','logmean','FitPoints',12);
+%% 
 % Prepare the corresponding time vector with values referring to the middle 
 % of the averaging windows.
 
 time_ts = time_turb(window_ind(:,1)) + ...
     0.5*( time_turb(window_ind(:,2)) - time_turb(window_ind(:,1)));
-
-%%
+%% 
 % Plot the obtained results.
 
 figure('Units','normalized','Position',[0 0 0.6 0.3])
@@ -549,16 +494,14 @@ axis tight
 legend({'u','v','w','clouds'})
 xlabel('Time')
 title('ATR RF12 R2B TKE dissipation rate (SFC method)')
-
 %% 
 % The same can be analogously done with the two other methods using |edr_psd| 
 % and |edr_var|.
 
-edr_psd_U_ts = process_timeseries(Up,window_ind, @edr_psd,dr,psd_fit_range,'lon','Method','logmean','FittingPoints',12);
-edr_psd_V_ts = process_timeseries(Vp,window_ind, @edr_psd,dr,psd_fit_range,'lat','Method','logmean','FittingPoints',12);
-edr_psd_W_ts = process_timeseries(Wp,window_ind, @edr_psd,dr,psd_fit_range,'lat','Method','logmean','FittingPoints',12);
-
-%%
+edr_psd_U_ts = process_timeseries(Up,window_ind, @edr_psd,dr,psd_fit_range,0.50,'Method','logmean','FitPoints',12);
+edr_psd_V_ts = process_timeseries(Vp,window_ind, @edr_psd,dr,psd_fit_range,0.65,'Method','logmean','FitPoints',12);
+edr_psd_W_ts = process_timeseries(Wp,window_ind, @edr_psd,dr,psd_fit_range,0.65,'Method','logmean','FitPoints',12);
+%% 
 % However, in the case of the repetitive application of the |edr_var| with the 
 % same options (e.g. in |process_timeseries|), it is recommended to precompute 
 % the normalized dissipation spectrum only once and insert it as the parameter 
@@ -570,8 +513,7 @@ edr_psd_W_ts = process_timeseries(Wp,window_ind, @edr_psd,dr,psd_fit_range,'lat'
 edr_var_U_ts = process_timeseries(Up,window_ind, @edr_var,dr,var_cutoff_scale,'lon','DissipationSpectrum',[k1,Dlon]);
 edr_var_V_ts = process_timeseries(Vp,window_ind, @edr_var,dr,var_cutoff_scale,'lat','DissipationSpectrum',[k1,Dlat]);
 edr_var_W_ts = process_timeseries(Wp,window_ind, @edr_var,dr,var_cutoff_scale,'lat','DissipationSpectrum',[k1,Dlat]);
-
-%%
+%% 
 % Compare the results for vertical component between the three methods.
 
 figure('Units','normalized','Position',[0 0 0.6 0.3])
@@ -588,8 +530,7 @@ axis tight
 legend({'sfc','psd','var','clouds'})
 xlabel('Time')
 title('ATR RF12 R2B TKE dissipation rate (vertical velocity)')
-
-%% Clouds versus clear air
+% Clouds versus clear air
 % It is clearly visible in the plots above that cloudy regions usually coincide 
 % with the largest values of TKE dissipation rate. Compare the mean values between 
 % cloudy and clear air pieces of the segment.

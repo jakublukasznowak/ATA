@@ -82,7 +82,7 @@ function [edr,cf,fig1,fig2] = edr_var (x,dr,cutoff_scale,component,options)
 arguments
     x (:,1) {mustBeReal, mustBeFinite, mustBeNonempty}
     dr (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} % = TAS/samp
-    cutoff_scale (1,1) {mustBePositive, mustBeFinite, mustBeNonempty, mustBeValidScale(cutoff_scale,x,dr)} % ~ TAS/Nyquist
+    cutoff_scale (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} % ~ TAS/Nyquist
     component (1,1) string {mustBeMember(component,{'lon','lat'})}
     options.Viscosity (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} = 1.506e-5
     options.AbsTol (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} = 1e-7
@@ -96,6 +96,18 @@ arguments
 end
 
 vis = options.Viscosity;
+
+
+% Check if the cutoff scale is valid
+
+if cutoff_scale<2*dr || cutoff_scale>dr*length(x)/2
+    if cutoff_scale<2*dr
+        cutoff_scale = 2*dr;
+    else
+        cutoff_scale = dr*length(x)/2;
+    end
+    warning('EDR_VAR:InvalidCutoff','Invalid cutoff scale was changed to %.2f.',cutoff_scale)
+end
 
 
 % Calculate non-dim 1-d dissipation spectrum D11* or D22*
@@ -205,20 +217,6 @@ C2 = trapz( [x(indL); xcut], [y(indL); ycut] );
 
 CF = 1+C1/C2;
 
-end
-
-
-function mustBeValidScale(a,x,dr)
-    if ~ge(a,dr*2)
-        eid = 'Cutoff:tooLow';
-        msg = sprintf('Cutoff scale must be within [dr*2 dr*length(x)/2] = [%.2f %.2f].',dr*2,dr*length(x)/2);
-        throwAsCaller(MException(eid,msg))
-    end
-    if ~le(a,length(x)*dr/2)
-        eid = 'Cutoff:tooHigh';
-        msg = sprintf('Cutoff scale must be within [dr*2 dr*length(x)/2] = [%.2f %.2f].',dr*2,dr*length(x)/2);
-        throwAsCaller(MException(eid,msg))
-    end
 end
 
 

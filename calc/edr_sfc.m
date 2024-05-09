@@ -46,13 +46,13 @@ function [edr,slp,e,fig] = edr_sfc (x,dr,fit_range,C,options)
 arguments
     x (:,1) {mustBeReal, mustBeFinite, mustBeNonempty}
     dr (1,1) {mustBePositive, mustBeFinite, mustBeNonempty} % = TAS/samp
-    fit_range (1,2) {mustBePositive, mustBeFinite, mustBeNonempty, mustBeValidRange(fit_range,x,dr)}
+    fit_range (1,2) {mustBePositive, mustBeFinite, mustBeNonempty}
     C (1,1) {mustBeReal, mustBeFinite, mustBeNonempty} = 2.0
     options.Method (1,1) string {mustBeMember(options.Method,{'direct','logmean'})} = 'logmean'
     options.FitPoints (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = 10
     options.Slope (1,1) {mustBeReal, mustBeFinite, mustBeNonempty} = 2/3
     options.Plot (1,1) logical = false
-    options.PlotXLim (1,2) {mustBePositive, mustBeFinite, mustBeNonempty, mustBeValidRange(options.PlotXLim,x,dr)} = fit_range
+    options.PlotXLim (1,2) {mustBePositive, mustBeFinite, mustBeNonempty} = fit_range
     options.PlotYLim (1,2) {mustBeReal, mustBeNonempty} = [-inf inf];
 end
 
@@ -94,11 +94,11 @@ end
 
 if strcmp(options.Method,'logmean')
     [rv_fit,sfc_fit] = logmean(rv,sfc,options.FitPoints);
-    e.N = length(sfc_fit);
 else
     rv_fit = rv;
     sfc_fit = sfc;
 end
+e.N = length(sfc_fit);
 
 
 % Fit (1): fixed slope
@@ -127,7 +127,7 @@ e.slp  = sqrt(covarM(1,1));
 e.logOstar = sqrt(covarM(2,2));
 
 Ostar = exp(logOstar);
-e.Ostar = Ostar*e_logOstar;
+e.Ostar = Ostar*e.logOstar;
 
 
 % Linear correlation
