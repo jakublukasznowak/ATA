@@ -51,15 +51,23 @@ arguments
     options.Method (1,1) string {mustBeMember(options.Method,{'direct','logmean'})} = 'logmean'
     options.FitPoints (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = 10
     options.Slope (1,1) {mustBeReal, mustBeFinite, mustBeNonempty} = 2/3
+    options.Detrend (1,1) logical = false
     options.Plot (1,1) logical = false
     options.PlotXLim (1,2) {mustBePositive, mustBeFinite, mustBeNonempty} = fit_range
     options.PlotYLim (1,2) {mustBeReal, mustBeNonempty} = [-inf inf];
 end
 
 
-Lx = length(x);
+% Detrend
+
+if options.Detrend
+    x = detrend(x);
+end
+
 
 % Check if the fit range is valid
+
+Lx = length(x);
 
 if fit_range(1)<dr || fit_range(2)>Lx*dr
     if fit_range(1)<dr
@@ -112,7 +120,7 @@ O = exp(logO);
 e.O = O*e.logO;
 
 edr = (O/C)^(1/slpFixed);
-e.edrFixed = edr/slpFixed*e.logO;
+e.edr = edr/slpFixed*e.logO;
 
 
 % Fit (2): free slope

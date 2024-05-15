@@ -92,10 +92,18 @@ arguments
     % Pope's spectrum decays w.r.t. maximum 100-times at k1* = 5.7e-8 and 1.0, 1000-times at k1* = 5.7e-11 and 1.4
     options.DissipationSpectrumPoints (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = 1e3
     options.DissipationSpectrum (:,2) {mustBePositive, mustBeFinite} = [] % [non-dim k1* (k1*eta), non-dim D11* (D11/u_eta^3)]
+    options.Detrend (1,1) logical = false
     options.Plot (1,1) logical = false
 end
 
 vis = options.Viscosity;
+
+
+% Detrend
+
+if options.Detrend
+    x = detrend(x);
+end
 
 
 % Check if the cutoff scale is valid

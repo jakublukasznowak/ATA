@@ -66,9 +66,17 @@ arguments
     options.WindowLength (1,1) {mustBeInteger, mustBePositive, mustBeFinite, mustBeNonempty} = floor(length(x)/2)
     options.WindowOverlap (1,1) {mustBeInteger, mustBeNonnegative, mustBeFinite, mustBeNonempty} = ceil(length(x)/4)
     options.Slope (1,1) {mustBeReal, mustBeFinite, mustBeNonempty} = -5/3
+    options.Detrend (1,1) logical = false
     options.Plot (1,1) logical = false
     options.PlotXLim (1,2) {mustBePositive, mustBeFinite, mustBeNonempty} = fit_range
     options.PlotYLim (1,2) {mustBeReal, mustBeNonempty} = [-inf inf]
+end
+
+
+% Detrend
+
+if options.Detrend
+    x = detrend(x);
 end
 
 
